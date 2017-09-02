@@ -7,6 +7,8 @@ import sys
 
 import pygame
 
+from .ships import Ship
+
 
 class Start_Dust:
 
@@ -23,6 +25,15 @@ class Start_Dust:
 
         self.background_color = (0, 0, 0)
 
+        # player's ship
+        self.ship = Ship(self.screen)
+
+        # frames per seconds
+        self.fps = 60
+
+        # pygame's clock
+        self.clock = pygame.time.Clock()
+
         # run the game
         self.run()
 
@@ -30,6 +41,9 @@ class Start_Dust:
     def run(self):
         """Run the game."""
         while True:
+            # set fps
+            self.clock.tick(self.fps)
+
             # handle events
             self.manage_events()
 
@@ -55,6 +69,9 @@ class Start_Dust:
         Update the screen drawing all the objects of the game on it.
         """
         self.screen.fill(self.background_color)
+
+        self.ship.render()
+
         pygame.display.flip()
 
 
