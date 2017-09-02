@@ -25,12 +25,6 @@ class Ship(object):
         # path of the explosions images
         images_explosion_path = ["images/foo-0.png", "images/foo-1.png"]
 
-        # stay at initial postion at the beginning
-        self.moving_up = False
-        self.moving_down = False
-        self.moving_left = False
-        self.moving_right = False
-
         # get rect of image
         self.rect = self.image.get_rect()
 
@@ -79,16 +73,22 @@ class Ship_Player(Ship):
         """Set attributes up and set initial position."""
         image_path = "images/ship.png"
         # get screen's rect
-        screen_rect = screen.get_rect()
+        self.screen_rect = screen.get_rect()
 
         speed = 5
 
         # set position at the right of the screen
-        x = screen_rect.centerx - 40
-        y = screen_rect.bottom - 67
+        x = self.screen_rect.centerx - 40
+        y = self.screen_rect.bottom - 67
 
         # call superclass to initialize ship
         super(self.__class__, self).__init__(screen, image_path, speed, x, y)
+
+        # stay at initial postion at the beginning
+        self.moving_up = False
+        self.moving_down = False
+        self.moving_left = False
+        self.moving_right = False
 
 
     def check_keyup(self, event):
@@ -117,11 +117,11 @@ class Ship_Player(Ship):
 
     def keep_moving(self):
         """Keep moving."""
-        if self.moving_up:
+        if self.moving_up and not self.rect.y < self.screen_rect.top:
             self.go_up()
-        elif self.moving_down:
+        elif self.moving_down and not self.rect.y > self.screen_rect.bottom - 63:
             self.go_down()
-        elif self.moving_left:
+        elif self.moving_left and not self.rect.x < self.screen_rect.left:
             self.go_left()
-        elif self.moving_right:
+        elif self.moving_right and not self.rect.x > self.screen_rect.right - 59:
             self.go_right()
