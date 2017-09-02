@@ -7,7 +7,7 @@ import sys
 
 import pygame
 
-from .ships import Ship
+from src.ships import Ship_Player
 
 
 class Start_Dust:
@@ -26,7 +26,7 @@ class Start_Dust:
         self.background_color = (0, 0, 0)
 
         # player's ship
-        self.ship = Ship(self.screen)
+        self.ship = Ship_Player(self.screen)
 
         # frames per seconds
         self.fps = 60
@@ -47,8 +47,17 @@ class Start_Dust:
             # handle events
             self.manage_events()
 
+            # process all objects
+            self.process()
+
             # draw all game's objects
             self.update_screen()
+
+    def process(self):
+        """
+        Every objects of the game does whatever is was created to do.
+        """
+        self.ship.keep_moving()
 
 
     def manage_events(self):
@@ -60,8 +69,9 @@ class Start_Dust:
             if event.type == pygame.QUIT:
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    sys.exit()
+                self.ship.check_keydown(event)
+            elif event.type == pygame.KEYUP:
+                self.ship.check_keyup(event)
 
 
     def update_screen(self):
