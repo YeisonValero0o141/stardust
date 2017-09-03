@@ -8,6 +8,7 @@ import sys
 import pygame
 
 from src.ships import Ship_Player
+from src.bullet import Bullet
 
 
 class Start_Dust:
@@ -25,8 +26,15 @@ class Start_Dust:
 
         self.background_color = (0, 0, 0)
 
+        # first bullet's path and location in the image
+        bullet1_path = "images/Bullet2.bmp"
+        bullet1_location = (64, 1, 5, 10)
+
+        # bullet
+        self.bullet = Bullet(self.screen, bullet1_path, bullet1_location)
+
         # player's ship
-        self.ship = Ship_Player(self.screen)
+        self.ship = Ship_Player(self.screen, self.bullet)
 
         # frames per seconds
         self.fps = 60
@@ -59,6 +67,8 @@ class Start_Dust:
         """
         self.ship.keep_moving()
 
+        self.ship.process_bullet(go_up=True)
+
 
     def manage_events(self):
         """
@@ -83,6 +93,7 @@ class Start_Dust:
         self.ship.render()
 
         pygame.display.flip()
+
 
 
 if __name__ == "__main__":
