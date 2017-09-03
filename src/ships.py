@@ -6,19 +6,20 @@ import random
 
 import pygame
 
+from bullet import Bullet
 from utils import get_sprite
 
 
 class Ship(object):
     """Base ship to make others more specialized."""
 
-    def __init__(self, screen, image_path, bullet, speed, x, y):
+    def __init__(self, screen, image, bullet, speed, x, y):
         """
         Load image of the ship and set attributes.
         Store screen as well.
         """
         # load image
-        self.image = pygame.image.load(image_path).convert_alpha()
+        self.image = image
         # store screen
         self.screen = screen
         # save speed
@@ -31,7 +32,7 @@ class Ship(object):
 
         # get rect of image and screen
         self.rect = self.image.get_rect()
-        self.screen_rect
+        self.screen_rect = self.screen.get_rect()
 
         # set initial position
         self.rect.y = y
@@ -123,20 +124,26 @@ class Ship(object):
 class Ship_Player(Ship):
     """Ship that user will control."""
 
-    def __init__(self, screen, bullet):
+    def __init__(self, screen, bullet_path, bullet_location):
         """Set attributes up and set initial position."""
         image_path = "images/ship.png"
+        # load image
+        self.image = pygame.image.load(image_path).convert_alpha()
+
+        # instance bullet
+        self.bullet = Bullet(screen, bullet_path, bullet_location)
+
         # get screen's rect
-        self.screen_rect = screen.get_rect()
+        screen_rect = screen.get_rect()
 
         speed = 5
 
-        # set at the middle bottom of screen
-        x = self.screen_rect.centerx - 40
-        y = self.screen_rect.bottom - 67
+        # set position at the middle bottom of screen
+        x = screen_rect.centerx - 40
+        y = screen_rect.bottom - 67
 
         # call superclass to initialize ship
-        super(self.__class__, self).__init__(screen, image_path, bullet, speed, x, y)
+        super(self.__class__, self).__init__(screen, self.image, self.bullet, speed, x, y)
 
         # set initial position of bullet
         self.set_bullet_position(go_up=True)
@@ -146,7 +153,6 @@ class Ship_Player(Ship):
         self.moving_down = False
         self.moving_left = False
         self.moving_right = False
-
 
 
     def check_keyup(self, event):
@@ -191,5 +197,137 @@ class Ship_Player(Ship):
 class Ship_AI_Enemy(Ship):
     """Enemy ship with some AI."""
 
-    def __init__(self, screen, bullet):
-        pass
+    def __init__(self, screen, bullet_path, bullet_location):
+        """Set position and turn image."""
+        image_path = "images/ship.png"
+        self.image = pygame.image.load(image_path).convert_alpha()
+
+        # rotate image
+        self.image = pygame.transform.rotate(self.image, 180)
+
+        # get screen's rect
+        screen_rect = screen.get_rect()
+
+        # set position at the middle top of screen
+        x = screen_rect.centerx - 40
+        y = screen_rect.top
+
+        speed = 2
+
+        # instance bullet
+        self.bullet = Bullet(screen, bullet_path, bullet_location)
+
+        # class superclass to initialize ship
+        super(self.__class__, self).__init__(screen, self.image, self.bullet, speed, x, y)
+
+        # set initial position of bullet
+        self.set_bullet_position()
+
+        # set default state machine. There are just two possibles states exploring and destroying
+        self.state = "exploring"
+        # flag to know whether or not it has reach out the destination
+        self.has_come_dest = False
+
+        # minimum distance to swtich to destroying state
+        self.min_x_distance = 20
+        self.min_y_distance = 450
+
+        # at the beginning the destination is the initial
+        # position but this will change
+        self.x_dest = self.rect.x
+        self.y_dest = self.rect.y
+
+
+    def get_distance_to(self, ship):
+        """Return the distance that separate it with ship."""
+        distance_x = self.rect.x - ship.rect.x
+        distance_y = self.rect.y - ship.rect.y
+
+        return (distance_x, distance_y)
+
+
+    def can_see(self, ship):
+        """Wheter it can see ship, switch to destroying."""
+        distance = self.get_distance_to(ship)
+        if distance[0] < self.min_x_distance and distance[1] < self.min_y_distance:
+            self.state = "destroying"
+        else:
+            self.state = "exploring"
+
+
+    def set_destination(self):
+        """Set destination randomly."""
+        # get the positions available by speed
+        x_space_avail = range(self.screen_rect.left, self.screen_rect.right-53, self.speed)
+        y_space_avail = range(self.screen_rect.top, self.screen_rect.bottom-63, self.speed)
+
+        # set new position of one of the options
+        self.x_dest = random.choice(x_space_avail)
+        self.y_dest = random.choice(y_space_avail)
+
+
+    def process(self, ship):
+        """Process all actions."""
+        # set which one of the two state is appropiate
+        self.can_see(ship)
+
+        if self.state == "exploring":
+            self.explore()
+        else:
+            self.destroy(ship)
+
+
+    def can_shoot_to(self, ship):
+        """Shoot if it is in front of the ship."""
+        if self.rect.x == ship.rect.x and self.rect.y < ship.rect.y:
+            return True
+        else:
+            return False
+
+
+    def destroy(self, ship):
+        """Try to destroy ship."""
+        # if ship is in front, shoot it
+        if self.can_shoot_to(ship):
+            self.bullet.shoot()
+        else:
+            # if not, try to get to ship
+            self.move_x(ship.rect.x)
+            self.move_y(ship.rect.y)
+
+
+    def explore(self):
+        """Move around screen until find the ship."""
+        # wheter it already has come to destination
+        if self.has_come_to_dest():
+            # set new destination
+            self.set_destination()
+
+        # if not, just keep moving until get to destination
+        self.move_x(self.x_dest)
+        self.move_y(self.y_dest)
+
+
+
+    def has_come_to_dest(self):
+        """"Check it it has come to destination. Return bool."""
+        if self.rect.x == self.x_dest and self.rect.y == self.y_dest:
+            return True
+        else:
+            return False
+
+
+    def move_x(self, target):
+        """Move right or left to get to x dest."""
+        if self.rect.x < target:
+            self.go_right()
+        elif self.rect.x > target:
+            self.go_left()
+
+
+    def move_y(self, target):
+        """Move up or down to get to y dest."""
+        if self.rect.y < target:
+            self.go_down()
+        elif self.rect.y > target:
+            self.go_up()
