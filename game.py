@@ -60,16 +60,13 @@ class Start_Dust:
             # draw all game's objects
             self.update_screen()
 
+
     def process(self):
         """
         Every objects of the game does whatever is was created to do.
         """
-        self.ship.keep_moving()
+        self.ship.process(self.ship_enemy.bullet)
         self.ship_enemy.process(self.ship)
-
-        # process events of bullet like moving, reset ints position respectively
-        self.ship_enemy.process_bullet()
-        self.ship.process_bullet(go_up=True)
 
 
     def manage_events(self):
@@ -79,7 +76,7 @@ class Start_Dust:
         """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                sys.exit()
+                self.close()
             elif event.type == pygame.KEYDOWN:
                 self.ship.check_keydown(event)
             elif event.type == pygame.KEYUP:
@@ -97,6 +94,12 @@ class Start_Dust:
         self.ship_enemy.render()
 
         pygame.display.flip()
+
+
+    def close(self):
+        """Close game."""
+        pygame.quit()
+        sys.exit()
 
 
 
