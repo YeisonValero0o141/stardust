@@ -45,6 +45,8 @@ class Ship(object):
         # becase no ship will be set destroyed at
         # the start of the game
         self.destroyed = False
+        # flag to know when update time_after_shot
+        self.update_time_after_shot = True
 
         self.time_after_shot = time.time()
         self.time_before_shot = time.time()
@@ -77,7 +79,7 @@ class Ship(object):
         sprite5 = get_sprite(image1, location[4])
         sprite6 = get_sprite(image1, location[5])
 
-        # add sprites of 1rst image
+        # add sprites of 1st image
         sprites.append(sprite1)
         sprites.append(sprite2)
         sprites.append(sprite3)
@@ -117,22 +119,27 @@ class Ship(object):
 
 
     def has_been_shot(self, bullet):
-        """Return True it has been shot else False."""
+        """Return True it has been shot by another bullet. else False."""
         if bullet.rect.colliderect(self.rect) and bullet.fired:
             return True
         else:
             return False
 
 
-    def process(self, bullet, go_up=False):
+    def process(self, ship, bullet, go_up=False):
         """Do actions of ship."""
         if self.has_been_shot(bullet):
             self.destroyed = True
 
-            # to avoid upate time_after_shot over and over again
-            if self.time_before_shot > self.time_after_shot:
+            # it will not be draw bullet because it has destroyed ship
+            bullet.reset_fired()
+            ship.set_bullet_position(go_up)
+
+            # to avoid update time_after_shot over and over again
+            if self.update_time_after_shot:
                 # update time plus a few mili seconds
                 self.time_after_shot = time.time() + 0.1
+                self.update_time_after_shot = False
 
         self.process_bullet(go_up)
 
@@ -187,7 +194,7 @@ class Ship(object):
         if self.count >= 11:
             self.count = 0
 
-        # update time until reach out the desired time
+        # update time_before_shot until reach out the desired time
         if self.time_before_shot < self.time_after_shot:
             self.time_before_shot = time.time()
 
@@ -196,6 +203,7 @@ class Ship(object):
             self.count += 1
             # update again, that way it does not blit many sprites at one moment
             self.time_after_shot = time.time() + 0.1
+            self.update_time_after_shot = True
 
         # adjust the x position to the center of the ship
         rect = self.rect.copy()
@@ -245,6 +253,13 @@ class Ship_Player(Ship):
         # set initial position of bullet
         self.set_bullet_position(go_up=True)
 
+        # flag to know when stop game
+        self.stop_game = False
+
+        # time to close game after it's been destroyed
+        self.time_to_close_game = time.time()
+        self.time_to_wait = time.time()
+
         # stay at initial postion at the beginning
         self.moving_up = False
         self.moving_down = False
@@ -290,11 +305,26 @@ class Ship_Player(Ship):
             self.go_right()
 
 
-    def process(self, bullet, go_up=True):
+    def process(self, ship, close_game_function, go_up=True):
         """Process ship and bullet."""
         self.keep_moving()
 
-        super(self.__class__, self).process(bullet, go_up)
+        # close game if player has been destroyed
+        self.has_been_destroyed(close_game_function)
+
+        super(self.__class__, self).process(ship, ship.bullet, go_up)
+
+
+    def has_been_destroyed(self, close_game_function):
+        """"If player has been destroyed close the game."""
+        if self.destroyed:
+            if self.time_to_wait > self.time_to_close_game:
+                self.time_to_close_game = time.time() + 1.45
+            else:
+                self.time_to_wait = time.time()
+
+            if self.time_to_wait > self.time_to_close_game:
+                close_game_function()
 
 
 
@@ -330,13 +360,13 @@ class Ship_AI_Enemy(Ship):
         # set initial position of bullet
         self.set_bullet_position()
 
-        # set default state machine. There are just two possibles states exploring and destroying
+        # set default state machine. There are just two possible states: exploring and destroying
         self.state = "exploring"
         # flag to know whether or not it has reach out the destination
         self.has_come_dest = False
 
         # minimum distance to swtich to destroying state
-        self.min_x_distance = 50
+        self.min_x_distance = 100
         self.min_y_distance = 450
 
         # at the beginning the destination is the initial
@@ -385,7 +415,7 @@ class Ship_AI_Enemy(Ship):
         else:
             self.destroy(ship)
 
-        super(self.__class__, self).process(ship.bullet)
+        super(self.__class__, self).process(ship, ship.bullet)
 
 
     def can_shoot_to(self, ship):
@@ -420,7 +450,6 @@ class Ship_AI_Enemy(Ship):
         # if not, just keep moving until get to destination
         self.move_x(self.x_dest)
         self.move_y(self.y_dest)
-
 
 
     def has_come_to_dest(self):

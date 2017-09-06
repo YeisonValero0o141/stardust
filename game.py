@@ -20,10 +20,12 @@ class Start_Dust:
         title = "StartDust"
         # screen's size
         self.screen_size = (900, 500)
+
         # open window and set title
         self.screen = pygame.display.set_mode(self.screen_size)
         pygame.display.set_caption(title)
 
+        # black
         self.background_color = (0, 0, 0)
 
         # first bullet's path and location in the image
@@ -37,6 +39,9 @@ class Start_Dust:
 
         # frames per seconds
         self.fps = 60
+
+        # hide cursor
+        pygame.mouse.set_visible(False)
 
         # pygame's clock
         self.clock = pygame.time.Clock()
@@ -63,9 +68,9 @@ class Start_Dust:
 
     def process(self):
         """
-        Every objects of the game does whatever is was created to do.
+        Every object of the game does whatever is was created to do.
         """
-        self.ship.process(self.ship_enemy.bullet)
+        self.ship.process(self.ship_enemy, self.close)
         self.ship_enemy.process(self.ship)
 
 

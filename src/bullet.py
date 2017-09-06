@@ -12,7 +12,7 @@ class Bullet:
 
     def __init__(self, screen, image_path, location):
         """Load image that will represent bullet."""
-        self.image = pygame.image.load(image_path)
+        self.image = pygame.image.load(image_path).convert_alpha()
         self.screen = screen
         # location of the desired bullet in the image
 
@@ -24,7 +24,7 @@ class Bullet:
         # flag to know whether or not the bulet has been fired
         self.fired = False
 
-        self.speed = 10
+        self.speed = 12
 
         # set initial position
         self.rect.x = 0
@@ -32,7 +32,7 @@ class Bullet:
 
 
     def set_position(self, x, y):
-        """Set position according x and y."""
+        """Set position according with x and y."""
         self.rect.x = x
         self.rect.y = y
 
@@ -48,7 +48,9 @@ class Bullet:
 
 
     def reset_fired(self):
-        """Reset fired flag to its initial Value (False)."""
+        """
+        Reset fired flag to its initial Value (False).
+        """
         self.fired = False
 
 
