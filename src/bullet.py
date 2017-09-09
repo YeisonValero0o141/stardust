@@ -24,7 +24,7 @@ class Bullet:
         # flag to know whether or not the bulet has been fired
         self.fired = False
 
-        self.speed = 12
+        self.speed = 8
 
         # set initial position
         self.rect.x = 0
