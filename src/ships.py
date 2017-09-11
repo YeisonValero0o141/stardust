@@ -48,10 +48,14 @@ class Ship(object):
         # flag to know when update time_after_shot
         self.update_time_after_shot = True
 
+        # ships' id
         self.id = id_ship
 
         # flag to know when pass the id to dead_ships list of Fleet_Enemy
         self.pass_id = False
+
+        # ships won't can move when they are destroyed
+        self.dont_move = False
 
         self.time_after_shot = time.time()
         self.time_before_shot = time.time()
@@ -104,23 +108,27 @@ class Ship(object):
 
 
     def go_up(self):
-        """Go upward."""
-        self.rect.y -= self.speed
+        """Go upward if ship can move."""
+        if not self.dont_move:
+            self.rect.y -= self.speed
 
 
     def go_down(self):
-        """Go downward."""
-        self.rect.y += self.speed
+        """Go downward if ship can move."""
+        if not self.dont_move:
+            self.rect.y += self.speed
 
 
     def go_left(self):
-        """Go leftward."""
-        self.rect.x -= self.speed
+        """Go leftward if ship can move."""
+        if not self.dont_move:
+            self.rect.x -= self.speed
 
 
     def go_right(self):
-        """Go rightward."""
-        self.rect.x += self.speed
+        """Go rightward if ship can move."""
+        if not self.dont_move:
+            self.rect.x += self.speed
 
 
 
@@ -136,6 +144,7 @@ class Ship(object):
         """If it collide with ship switch destroyed to True."""
         if ship.rect.colliderect(self.rect) and not self.destroyed:
             self.destroyed = True
+            self.dont_move = True
             ship.destroyed = True
 
 
@@ -143,6 +152,7 @@ class Ship(object):
         """Do actions of ship."""
         if self.has_been_shot(bullet):
             self.destroyed = True
+            self.dont_move = True
 
             # it will not be draw bullet because it has destroyed ship
             bullet.reset_fired()
