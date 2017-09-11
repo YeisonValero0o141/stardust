@@ -143,9 +143,13 @@ class Ship(object):
     def collide_with(self, ship):
         """If it collide with ship switch destroyed to True."""
         if ship.rect.colliderect(self.rect) and not self.destroyed:
+            # change its own value to draw exploding sprites and stop moving
             self.destroyed = True
             self.dont_move = True
+
+            # same thing here, but with the ship player
             ship.destroyed = True
+            ship.dont_move = True
 
 
     def process(self, ship, bullet, go_up=False):
@@ -349,6 +353,7 @@ class Ship_Player(Ship):
         for ship in fleet.ships.values():
             if ship.bullet.rect.colliderect(self.rect) and ship.bullet.fired:
                 self.destroyed = True
+                self.dont_move = True
 
 
     def has_been_destroyed(self, close_game_function):
