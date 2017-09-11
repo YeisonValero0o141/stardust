@@ -326,12 +326,19 @@ class Ship_Player(Ship):
         """Process ship and bullet."""
         self.keep_moving()
 
-        self.has_been_shot(fleet)
+        self.has_been_shot_by_fleet(fleet)
 
         # close game if player has been destroyed
         self.has_been_destroyed(close_game_function)
 
         super(self.__class__, self).process(ship, ship.bullet, go_up)
+
+
+    def has_been_shot_by_fleet(self, fleet):
+        """Check if it has been shot."""
+        for ship in fleet.ships.values():
+            if ship.bullet.rect.colliderect(self.rect) and ship.bullet.fired:
+                self.destroyed = True
 
 
     def has_been_destroyed(self, close_game_function):
