@@ -14,7 +14,7 @@ from utils import get_sprite
 class Ship(object):
     """Base ship to make others more specialized."""
 
-    def __init__(self, screen, image, bullet, speed, x, y):
+    def __init__(self, screen, image, bullet, speed, x, y, id_ship=None):
         """
         Load image of the ship and set attributes.
         Store screen as well.
@@ -47,6 +47,11 @@ class Ship(object):
         self.destroyed = False
         # flag to know when update time_after_shot
         self.update_time_after_shot = True
+
+        self.id = id_ship
+
+        # flag to know when pass the id to dead_ships list of Fleet_Enemy
+        self.pass_id = False
 
         self.time_after_shot = time.time()
         self.time_before_shot = time.time()
@@ -118,12 +123,20 @@ class Ship(object):
         self.rect.x += self.speed
 
 
+
     def has_been_shot(self, bullet):
         """Return True it has been shot by another bullet. else False."""
         if bullet.rect.colliderect(self.rect) and bullet.fired:
             return True
         else:
             return False
+
+
+    def collide_with(self, ship):
+        """If it collide with ship switch destroyed to True."""
+        if ship.rect.colliderect(self.rect) and not self.destroyed:
+            self.destroyed = True
+            ship.destroyed = True
 
 
     def process(self, ship, bullet, go_up=False):
@@ -204,6 +217,10 @@ class Ship(object):
             # update again, that way it does not blit many sprites at one moment
             self.time_after_shot = time.time() + 0.1
             self.update_time_after_shot = True
+
+            # to avoid pop ship out too early
+            if self.count == 11:
+                self.pass_id = True
 
         # adjust the x position to the center of the ship
         rect = self.rect.copy()
@@ -305,9 +322,11 @@ class Ship_Player(Ship):
             self.go_right()
 
 
-    def process(self, ship, close_game_function, go_up=True):
+    def process(self, ship, fleet, close_game_function, go_up=True):
         """Process ship and bullet."""
         self.keep_moving()
+
+        self.has_been_shot(fleet)
 
         # close game if player has been destroyed
         self.has_been_destroyed(close_game_function)
@@ -416,6 +435,7 @@ class Ship_AI_Enemy(Ship):
             self.destroy(ship)
 
         super(self.__class__, self).process(ship, ship.bullet)
+        super(self.__class__, self).collide_with(ship)
 
 
     def can_shoot_to(self, ship):
@@ -432,7 +452,7 @@ class Ship_AI_Enemy(Ship):
     def destroy(self, ship):
         """Try to destroy ship."""
         # if ship is in front, shoot it
-        if self.can_shoot_to(ship):
+        if self.can_shoot_to(ship) and not self.destroyed:
             self.bullet.shoot()
         else:
             # if not, try to get to ship
@@ -474,3 +494,144 @@ class Ship_AI_Enemy(Ship):
             self.go_down()
         elif self.rect.y > target:
             self.go_up()
+
+
+class Ship_Enemy(Ship):
+    """Ship enemy."""
+
+    def __init__(self, screen, bullet, id_ship, x, y):
+        # load image
+        image_path = "images/enemy.png"
+        self.image = pygame.image.load(image_path).convert_alpha()
+
+        self.speed = random.randint(1, 5)
+
+        # initialize superclass
+        super(self.__class__, self).__init__(screen, self.image, bullet, self.speed, x, y, id_ship=id_ship)
+
+        # set initial bullet position
+        self.set_bullet_position()
+
+        # set destination
+        self.dest_x = random.randint(self.screen_rect.left, self.screen_rect.right)
+        self.dest_y = self.screen_rect.bottom + 50
+
+        # times to decide when shoot
+        self.time_to_shoot = time.time()
+        self.time_to_wait = time.time() + 1
+
+
+    def shoot(self):
+        """Every seconds if the random number are right, shoot."""
+        if self.time_to_shoot < self.time_to_wait:
+            self.time_to_shoot = time.time()
+        else:
+            if random.randint(0, 50) == random.randint(0, 50):
+                self.bullet.shoot()
+                self.time_to_wait = time.time() + 1
+
+
+    def process(self, ship, dead_ships):
+        """Move to destination, and shoot randomly."""
+        # shoot if a second has passed and the random numbers are right
+        self.shoot()
+
+        # move closer to destination
+        self.move_x()
+        self.move_y()
+
+        # pass id to dead_ships if it is destroyed or out of screen
+        self.pass_id_to_dead_ships(dead_ships)
+
+        # others process, and see if it collide with ship
+        super(self.__class__, self).process(ship, ship.bullet)
+        super(self.__class__, self).collide_with(ship)
+
+
+    def move_x(self):
+        """Move closer to x destination."""
+        if self.rect.x < self.dest_x:
+            self.go_right()
+        elif self.rect.x > self.dest_x:
+            self.go_left()
+
+
+    def move_y(self):
+        """Move closer to y destination"""
+        if not self.rect.y == self.dest_y:
+            self.go_down()
+
+
+    def pass_id_to_dead_ships(self, dead_ships):
+        """
+        Pass the id of the ship to dead_ships list
+        whether ship is destroyed or out of screen.
+        """
+        if self.destroyed and self.pass_id or \
+        self.rect.y > self.screen_rect.bottom:
+            if not self.id in dead_ships:
+                dead_ships.append(self.id)
+
+
+
+class Fleet_Enemy:
+    """"Fleet of Ships."""
+
+    def __init__(self, screen, bullet_path, bullet_location):
+        """Initialize fleet and set position."""
+        # get screen's rect
+        self.screen_rect = screen.get_rect()
+
+        # id to identify ships in the dictionary
+        self.id = 0
+        # number of ships that will form the fleet
+        self.ships_number = 10
+
+        # will contain all ships and other one all id of
+        # those that for one or another reason have to be deleted
+        self.ships, self.dead_ships = {}, []
+
+        # create ships
+        self.make_ship(self.ships_number, screen, bullet_path, bullet_location)
+
+
+    def make_ship(self, number_ships, screen, bullet_path, bullet_location):
+        """Make n amount of ships and add it to the dict."""
+        for x in range(number_ships):
+            # instance a bullet for each ship
+            bullet = Bullet(screen, bullet_path, bullet_location)
+
+            # set position randomly
+            x = random.randint(self.screen_rect.left, self.screen_rect.right)
+            y = random.randint(self.screen_rect.top, self.screen_rect.bottom - 400)
+
+            # create ship with random speed and position
+            ship = Ship_Enemy(screen, bullet, self.id, x, y)
+            ship.set_bullet_position()
+
+            # add it to the dict
+            self.ships[self.id] = ship
+            # increase id to avoid use it again
+            self.id += 1
+
+
+    def render(self):
+        """Render all the fleet."""
+        for ship in self.ships.values():
+            ship.render()
+
+
+    def remove_ship(self):
+        """Delete ship from the dictionary."""
+        for id_ship in self.dead_ships:
+            del self.ships[id_ship]
+            self.dead_ships.remove(id_ship)
+
+
+    def process(self, ship):
+        """Process all actions of every ship."""
+        for ship_e in self.ships.values():
+            ship_e.process(ship, self.dead_ships)
+
+        # delete all those that are destroyed or out of screen
+        self.remove_ship()
