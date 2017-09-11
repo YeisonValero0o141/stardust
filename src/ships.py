@@ -164,7 +164,7 @@ class Ship(object):
 
             # to avoid update time_after_shot over and over again
             if self.update_time_after_shot:
-                # update time plus a few mili seconds
+                # update time plus a mili seconds
                 self.time_after_shot = time.time() + 0.1
                 self.update_time_after_shot = False
 
@@ -607,7 +607,7 @@ class Fleet_Enemy:
         # id to identify ships in the dictionary
         self.id = 0
         # number of ships that will form the fleet
-        self.ships_number = 10
+        self.ships_number = 15
 
         # will contain all ships and other one all id of
         # those that for one or another reason have to be deleted
@@ -625,7 +625,7 @@ class Fleet_Enemy:
 
             # set position randomly
             x = random.randint(self.screen_rect.left, self.screen_rect.right)
-            y = random.randint(self.screen_rect.top, self.screen_rect.bottom - 400)
+            y = random.randint(self.screen_rect.top-200, self.screen_rect.bottom-500)
 
             # create ship with random speed and position
             ship = Ship_Enemy(screen, bullet, self.id, x, y)
@@ -650,10 +650,20 @@ class Fleet_Enemy:
             self.dead_ships.remove(id_ship)
 
 
-    def process(self, ship):
+    def process(self, ship, ai_ships=False):
         """Process all actions of every ship."""
         for ship_e in self.ships.values():
-            ship_e.process(ship, self.dead_ships)
+            if ai_ships:
+                ship_e.process(ship)
+            else:
+                ship_e.process(ship, self.dead_ships)
 
         # delete all those that are destroyed or out of screen
         self.remove_ship()
+
+
+
+class Ship_AI_Enemy(Ship):
+    """Flet of AI Ship Enemy."""
+
+    def __init__(self, screen, bullet )
