@@ -133,11 +133,9 @@ class Ship(object):
 
 
     def has_been_shot(self, bullet):
-        """Return True it has been shot by another bullet. else False."""
+        """Wheter it has been shot, change destroyed to True."""
         if bullet.rect.colliderect(self.rect) and bullet.fired:
-            return True
-        else:
-            return False
+            self.destroyed = True
 
 
     def collide_with(self, ship):
@@ -152,15 +150,42 @@ class Ship(object):
             ship.dont_move = True
 
 
-    def process(self, ship, bullet, go_up=False):
+    def pass_id_to_dead_ships(self, dead_ships):
+        """
+        Pass the id of the ship to dead_ships list
+        whether ship is destroyed or out of screen.
+        """
+        if self.destroyed and self.pass_id or \
+        self.rect.y > self.screen_rect.bottom:
+            if not self.id in dead_ships:
+                dead_ships.append(self.id)
+
+
+    def has_been_shot_by_fleet(self, fleet):
+        """Check if it has been shot."""
+        for ship in fleet.ships.values():
+            if ship.bullet.rect.colliderect(self.rect) and ship.bullet.fired:
+                self.destroyed = True
+
+
+    def process(self, ship_player=None, go_up=False,  fleet_1=[], fleet_2=[]):
         """Do actions of ship."""
-        if self.has_been_shot(bullet):
-            self.destroyed = True
+        if not ship_player:
+            self.has_been_shot_by_fleet(fleet_1)
+            self.has_been_shot_by_fleet(fleet_2)
+        else:
+            self.has_been_shot(ship_player.bullet)
+
+        if self.destroyed:
             self.dont_move = True
 
             # it will not be draw bullet because it has destroyed ship
-            bullet.reset_fired()
-            ship.set_bullet_position(go_up)
+            if ship_player:
+                ship_player.bullet.reset_fired()
+                ship_player.set_bullet_position()
+            else:
+                self.bullet.reset_fired()
+                self.set_bullet_position(go_up)
 
             # to avoid update time_after_shot over and over again
             if self.update_time_after_shot:
@@ -336,24 +361,14 @@ class Ship_Player(Ship):
             self.go_right()
 
 
-    def process(self, ship, fleet, close_game_function, go_up=True):
+    def process(self, fleet1, fleet2, close_game_function, go_up=True, ship_player=True):
         """Process ship and bullet."""
         self.keep_moving()
-
-        self.has_been_shot_by_fleet(fleet)
 
         # close game if player has been destroyed
         self.has_been_destroyed(close_game_function)
 
-        super(self.__class__, self).process(ship, ship.bullet, go_up)
-
-
-    def has_been_shot_by_fleet(self, fleet):
-        """Check if it has been shot."""
-        for ship in fleet.ships.values():
-            if ship.bullet.rect.colliderect(self.rect) and ship.bullet.fired:
-                self.destroyed = True
-                self.dont_move = True
+        super(self.__class__, self).process(go_up=go_up, fleet_1=fleet1, fleet_2=fleet2)
 
 
     def has_been_destroyed(self, close_game_function):
@@ -372,7 +387,7 @@ class Ship_Player(Ship):
 class Ship_AI_Enemy(Ship):
     """Enemy ship with some AI."""
 
-    def __init__(self, screen, bullet_path, bullet_location):
+    def __init__(self, screen, bullet, x, y, id_ship=None):
         """Set position and turn image."""
         image_path = "images/ship.png"
         self.image = pygame.image.load(image_path).convert_alpha()
@@ -383,20 +398,16 @@ class Ship_AI_Enemy(Ship):
         # get screen's rect
         screen_rect = screen.get_rect()
 
-        # set position at the middle top of screen
-        x = screen_rect.centerx - 40
-        y = screen_rect.top
+        speed = 1
 
-        speed = 2
-
-        # instance bullet
-        self.bullet = Bullet(screen, bullet_path, bullet_location)
+        # store bullet
+        self.bullet = bullet
 
         # rotate bullet
         self.bullet.image = pygame.transform.rotate(self.bullet.image, 180)
 
         # class superclass to initialize ship
-        super(self.__class__, self).__init__(screen, self.image, self.bullet, speed, x, y)
+        super(self.__class__, self).__init__(screen, self.image, self.bullet, speed, x, y, id_ship=id_ship)
 
         # set initial position of bullet
         self.set_bullet_position()
@@ -446,7 +457,7 @@ class Ship_AI_Enemy(Ship):
         self.y_dest = random.choice(y_space_avail)
 
 
-    def process(self, ship):
+    def process(self, ship, dead_ships):
         """Process all actions."""
         # set which one of the two state is appropiate
         self.can_see(ship)
@@ -456,8 +467,9 @@ class Ship_AI_Enemy(Ship):
         else:
             self.destroy(ship)
 
-        super(self.__class__, self).process(ship, ship.bullet)
-        super(self.__class__, self).collide_with(ship)
+        super(self.__class__, self).process(ship_player=ship)
+        self.pass_id_to_dead_ships(dead_ships)
+        self.collide_with(ship)
 
 
     def can_shoot_to(self, ship):
@@ -521,7 +533,7 @@ class Ship_AI_Enemy(Ship):
 class Ship_Enemy(Ship):
     """Ship enemy."""
 
-    def __init__(self, screen, bullet, id_ship, x, y):
+    def __init__(self, screen, bullet, x, y, id_ship=None):
         # load image
         image_path = "images/enemy.png"
         self.image = pygame.image.load(image_path).convert_alpha()
@@ -566,7 +578,7 @@ class Ship_Enemy(Ship):
         self.pass_id_to_dead_ships(dead_ships)
 
         # others process, and see if it collide with ship
-        super(self.__class__, self).process(ship, ship.bullet)
+        super(self.__class__, self).process(ship_player=ship)
         super(self.__class__, self).collide_with(ship)
 
 
@@ -584,22 +596,11 @@ class Ship_Enemy(Ship):
             self.go_down()
 
 
-    def pass_id_to_dead_ships(self, dead_ships):
-        """
-        Pass the id of the ship to dead_ships list
-        whether ship is destroyed or out of screen.
-        """
-        if self.destroyed and self.pass_id or \
-        self.rect.y > self.screen_rect.bottom:
-            if not self.id in dead_ships:
-                dead_ships.append(self.id)
-
-
 
 class Fleet_Enemy:
     """"Fleet of Ships."""
 
-    def __init__(self, screen, bullet_path, bullet_location):
+    def __init__(self, screen, bullet_path, bullet_location, ai_ships=False):
         """Initialize fleet and set position."""
         # get screen's rect
         self.screen_rect = screen.get_rect()
@@ -607,17 +608,20 @@ class Fleet_Enemy:
         # id to identify ships in the dictionary
         self.id = 0
         # number of ships that will form the fleet
-        self.ships_number = 15
+        if ai_ships:
+            self.ships_number = 5
+        else:
+            self.ships_number = 0
 
         # will contain all ships and other one all id of
         # those that for one or another reason have to be deleted
         self.ships, self.dead_ships = {}, []
 
         # create ships
-        self.make_ship(self.ships_number, screen, bullet_path, bullet_location)
+        self.make_ship(self.ships_number, screen, bullet_path, bullet_location, ai_ships)
 
 
-    def make_ship(self, number_ships, screen, bullet_path, bullet_location):
+    def make_ship(self, number_ships, screen, bullet_path, bullet_location, ai_ships=False):
         """Make n amount of ships and add it to the dict."""
         for x in range(number_ships):
             # instance a bullet for each ship
@@ -627,8 +631,11 @@ class Fleet_Enemy:
             x = random.randint(self.screen_rect.left, self.screen_rect.right)
             y = random.randint(self.screen_rect.top-200, self.screen_rect.bottom-500)
 
-            # create ship with random speed and position
-            ship = Ship_Enemy(screen, bullet, self.id, x, y)
+            # create ship with a random position
+            if ai_ships:
+                ship = Ship_AI_Enemy(screen, bullet, x, y, id_ship=self.id)
+            else:
+                ship = Ship_Enemy(screen, bullet, x, y, id_ship=self.id)
             ship.set_bullet_position()
 
             # add it to the dict
@@ -654,16 +661,9 @@ class Fleet_Enemy:
         """Process all actions of every ship."""
         for ship_e in self.ships.values():
             if ai_ships:
-                ship_e.process(ship)
+                ship_e.process(ship, self.dead_ships)
             else:
                 ship_e.process(ship, self.dead_ships)
 
         # delete all those that are destroyed or out of screen
         self.remove_ship()
-
-
-
-class Ship_AI_Enemy(Ship):
-    """Flet of AI Ship Enemy."""
-
-    def __init__(self, screen, bullet )
