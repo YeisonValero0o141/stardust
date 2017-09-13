@@ -685,10 +685,10 @@ class Fleet_Enemy:
         """Process all actions of every ship."""
         for ship_e in self.ships.values():
             ship_e.process(ship, self.dead_ships)
-            print ship.rect.x
+
             # reset the position of ship if it's out of screen
-            if ship.is_out_of_screen():
-                self.reset_position(ship)
+            if ship_e.is_out_of_screen():
+                self.reset_position(ship_e)
 
         # delete all those that are destroyed
         self.remove_ship()

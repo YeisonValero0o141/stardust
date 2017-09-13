@@ -74,7 +74,7 @@ class Start_Dust:
         """
         self.ship.process(self.fleet_enemy, self.fleet_ai_enemy, self.close)
         self.fleet_enemy.process(self.ship)
-        # self.fleet_ai_enemy.process(self.ship)
+        self.fleet_ai_enemy.process(self.ship)
 
 
     def manage_events(self):
