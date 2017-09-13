@@ -34,8 +34,6 @@ class Start_Dust:
 
         # player's ship
         self.ship = Ship_Player(self.screen, bullet1_path, bullet1_location)
-        # enemy's ship
-        # self.ship_enemy = Ship_AI_Enemy(self.screen, bullet1_path, bullet1_location)
         # enemy fleet
         self.fleet_enemy = Fleet_Enemy(self.screen, bullet1_path, bullet1_location)
         # ai anemy fleet
@@ -75,10 +73,8 @@ class Start_Dust:
         Every object of the game does whatever is was created to do.
         """
         self.ship.process(self.fleet_enemy, self.fleet_ai_enemy, self.close)
-        print self.ship.bullet.fired
-        # self.ship_enemy.process(self.ship)
         self.fleet_enemy.process(self.ship)
-        self.fleet_ai_enemy.process(self.ship, ai_ships=True)
+        # self.fleet_ai_enemy.process(self.ship)
 
 
     def manage_events(self):
@@ -102,8 +98,6 @@ class Start_Dust:
         self.screen.fill(self.background_color)
 
         self.ship.render()
-
-        # self.ship_enemy.render()
 
         self.fleet_enemy.render()
         self.fleet_ai_enemy.render()

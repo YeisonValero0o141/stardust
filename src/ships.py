@@ -132,10 +132,14 @@ class Ship(object):
 
 
 
-    def has_been_shot(self, bullet):
+    def has_been_shot(self, ship):
         """Wheter it has been shot, change destroyed to True."""
-        if bullet.rect.colliderect(self.rect) and bullet.fired:
+        if ship.bullet.rect.colliderect(self.rect) and ship.bullet.fired:
             self.destroyed = True
+
+            ship.bullet.reset_fired()
+            ship.set_bullet_position(go_up=True)
+
 
 
     def collide_with(self, ship):
@@ -143,7 +147,6 @@ class Ship(object):
         if ship.rect.colliderect(self.rect) and not self.destroyed:
             # change its own value to draw exploding sprites and stop moving
             self.destroyed = True
-            self.dont_move = True
 
             # same thing here, but with the ship player
             ship.destroyed = True
@@ -153,12 +156,12 @@ class Ship(object):
     def pass_id_to_dead_ships(self, dead_ships):
         """
         Pass the id of the ship to dead_ships list
-        whether ship is destroyed or out of screen.
+        whether ship is destroyed.
         """
-        if self.destroyed and self.pass_id or \
-        self.rect.y > self.screen_rect.bottom:
+        if self.destroyed and self.pass_id:
             if not self.id in dead_ships:
                 dead_ships.append(self.id)
+
 
 
     def has_been_shot_by_fleet(self, fleet):
@@ -167,6 +170,12 @@ class Ship(object):
             if ship.bullet.rect.colliderect(self.rect) and ship.bullet.fired:
                 self.destroyed = True
 
+                # reset bullet position, and now ship can shoot again
+                ship.bullet.reset_fired()
+                ship.set_bullet_position()
+
+                break
+
 
     def process(self, ship_player=None, go_up=False,  fleet_1=[], fleet_2=[]):
         """Do actions of ship."""
@@ -174,18 +183,11 @@ class Ship(object):
             self.has_been_shot_by_fleet(fleet_1)
             self.has_been_shot_by_fleet(fleet_2)
         else:
-            self.has_been_shot(ship_player.bullet)
+            self.has_been_shot(ship_player)
+
 
         if self.destroyed:
             self.dont_move = True
-
-            # it will not be draw bullet because it has destroyed ship
-            if ship_player:
-                ship_player.bullet.reset_fired()
-                ship_player.set_bullet_position()
-            else:
-                self.bullet.reset_fired()
-                self.set_bullet_position(go_up)
 
             # to avoid update time_after_shot over and over again
             if self.update_time_after_shot:
@@ -200,6 +202,14 @@ class Ship(object):
         """Set bullet position."""
         x, y = self.get_init_desired_bullet_pos(go_up)
         self.bullet.set_position(x, y)
+
+
+    def is_out_of_screen(self):
+        """Return True if it has gone out of screen else False."""
+        if self.rect.y > self.screen_rect.bottom:
+            return True
+        else:
+            return False
 
 
     def process_bullet(self, go_up=False):
@@ -297,7 +307,7 @@ class Ship_Player(Ship):
         # get screen's rect
         screen_rect = screen.get_rect()
 
-        speed = 5
+        speed = 7
 
         # set position at the middle bottom of screen
         x = screen_rect.centerx - 40
@@ -609,9 +619,9 @@ class Fleet_Enemy:
         self.id = 0
         # number of ships that will form the fleet
         if ai_ships:
-            self.ships_number = 5
+            self.ships_number = 3
         else:
-            self.ships_number = 0
+            self.ships_number = 9
 
         # will contain all ships and other one all id of
         # those that for one or another reason have to be deleted
@@ -627,9 +637,8 @@ class Fleet_Enemy:
             # instance a bullet for each ship
             bullet = Bullet(screen, bullet_path, bullet_location)
 
-            # set position randomly
-            x = random.randint(self.screen_rect.left, self.screen_rect.right)
-            y = random.randint(self.screen_rect.top-200, self.screen_rect.bottom-500)
+            # get the ship's position randomly
+            x, y = self.get_random_pos()
 
             # create ship with a random position
             if ai_ships:
@@ -644,10 +653,25 @@ class Fleet_Enemy:
             self.id += 1
 
 
+    def get_random_pos(self):
+        """Return the desired random position of each ship."""
+        x = random.randint(self.screen_rect.left, self.screen_rect.right)
+        y = random.randint(self.screen_rect.top-100, self.screen_rect.bottom-500)
+
+        return (x, y)
+
+
     def render(self):
         """Render all the fleet."""
         for ship in self.ships.values():
             ship.render()
+
+
+    def reset_position(self, ship):
+        """Reset the position of ship randomly."""
+        x, y = self.get_random_pos()
+        ship.rect.x = x
+        ship.rect.y = y
 
 
     def remove_ship(self):
@@ -657,13 +681,14 @@ class Fleet_Enemy:
             self.dead_ships.remove(id_ship)
 
 
-    def process(self, ship, ai_ships=False):
+    def process(self, ship):
         """Process all actions of every ship."""
         for ship_e in self.ships.values():
-            if ai_ships:
-                ship_e.process(ship, self.dead_ships)
-            else:
-                ship_e.process(ship, self.dead_ships)
+            ship_e.process(ship, self.dead_ships)
+            print ship.rect.x
+            # reset the position of ship if it's out of screen
+            if ship.is_out_of_screen():
+                self.reset_position(ship)
 
-        # delete all those that are destroyed or out of screen
+        # delete all those that are destroyed
         self.remove_ship()
