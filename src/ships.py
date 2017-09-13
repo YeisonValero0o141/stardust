@@ -8,7 +8,7 @@ import time
 import pygame
 
 from bullet import Bullet
-from utils import get_sprite
+from utils import get_sprite, get_right_destination
 
 
 class Ship(object):
@@ -408,7 +408,7 @@ class Ship_AI_Enemy(Ship):
         # get screen's rect
         screen_rect = screen.get_rect()
 
-        speed = 1
+        speed = 2
 
         # store bullet
         self.bullet = bullet
@@ -459,12 +459,11 @@ class Ship_AI_Enemy(Ship):
     def set_destination(self):
         """Set destination randomly."""
         # get the positions available by speed
-        x_space_avail = range(self.screen_rect.left, self.screen_rect.right-53, self.speed)
-        y_space_avail = range(self.screen_rect.top, self.screen_rect.bottom-63, self.speed)
+        dest_x = random.randint(self.screen_rect.left, self.screen_rect.right-53)
+        dest_y = random.randint(self.screen_rect.top, self.screen_rect.bottom-90)
 
         # set new position of one of the options
-        self.x_dest = random.choice(x_space_avail)
-        self.y_dest = random.choice(y_space_avail)
+        self.x_dest, self.y_dest = dest_x, dest_y
 
 
     def process(self, ship, dead_ships):
@@ -486,6 +485,7 @@ class Ship_AI_Enemy(Ship):
         """Shoot if it is in front of the ship."""
         # make a range of approximation of the x of ship
         range_x = range(ship.rect.x-2, ship.rect.x+2)
+
         if self.rect.x in range_x and self.rect.y < self.min_y_distance and \
         not self.rect.y >= ship.rect.y:
             return True
@@ -499,7 +499,7 @@ class Ship_AI_Enemy(Ship):
         if self.can_shoot_to(ship) and not self.destroyed:
             self.bullet.shoot()
         else:
-            # if not, try to get to ship
+            # if not, try to get closer to ship
             self.move_x(ship.rect.x)
             self.move_y(ship.rect.y)
 
@@ -518,7 +518,9 @@ class Ship_AI_Enemy(Ship):
 
     def has_come_to_dest(self):
         """"Check it it has come to destination. Return bool."""
-        if self.rect.x == self.x_dest and self.rect.y == self.y_dest:
+        x_dest = range(self.x_dest-3, self.x_dest+5)
+        y_dest = range(self.y_dest-3, self.y_dest+5)
+        if self.rect.x in x_dest and self.rect.y in y_dest:
             return True
         else:
             return False
@@ -594,9 +596,9 @@ class Ship_Enemy(Ship):
 
     def move_x(self):
         """Move closer to x destination."""
-        if self.rect.x < self.dest_x:
+        if self.rect.x < self.dest_x and not self.rect.x in range(self.dest_x-4, self.dest_x+4):
             self.go_right()
-        elif self.rect.x > self.dest_x:
+        elif self.rect.x > self.dest_x and not self.rect.x in range(self.dest_x-4, self.dest_x+4):
             self.go_left()
 
 
@@ -685,7 +687,6 @@ class Fleet_Enemy:
         """Process all actions of every ship."""
         for ship_e in self.ships.values():
             ship_e.process(ship, self.dead_ships)
-
             # reset the position of ship if it's out of screen
             if ship_e.is_out_of_screen():
                 self.reset_position(ship_e)
