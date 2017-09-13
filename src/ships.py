@@ -8,7 +8,7 @@ import time
 import pygame
 
 from bullet import Bullet
-from utils import get_sprite, get_right_destination
+from utils import get_sprite
 
 
 class Ship(object):
@@ -287,8 +287,8 @@ class Ship(object):
         else:
             self.screen.blit(self.image, self.rect)
 
-            if self.bullet.fired:
-                self.bullet.render()
+        if self.bullet.fired:
+            self.bullet.render()
 
 
 
