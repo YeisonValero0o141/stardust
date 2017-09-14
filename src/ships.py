@@ -136,9 +136,9 @@ class Ship(object):
         """Wheter it has been shot, change destroyed to True."""
         # adapt player's rect
         rect = self.rect.copy()
-        rect.left -= 7
-        rect.right -= 7
-        if ship.bullet.rect.colliderect(rect) and ship.bullet.fired:
+        # rect.left -= 7
+        # rect.right -= 7
+        if ship.bullet.rect.colliderect(rect) and ship.bullet.fired and not self.destroyed:
             self.destroyed = True
 
             ship.bullet.reset_fired()
@@ -575,12 +575,17 @@ class Ship_Enemy(Ship):
         self.set_bullet_position()
 
         # set destination
-        self.dest_x = random.randint(self.screen_rect.left, self.screen_rect.right)
-        self.dest_y = self.screen_rect.bottom + 50
+        self.set_destination()
 
         # times to decide when shoot
         self.time_to_shoot = time.time()
         self.time_to_wait = time.time() + 1
+
+
+    def set_destination(self):
+        """Randomly set destination."""
+        self.dest_x = random.randint(self.screen_rect.left, self.screen_rect.right)
+        self.dest_y = self.screen_rect.bottom + 50
 
 
     def shoot(self):
@@ -588,7 +593,7 @@ class Ship_Enemy(Ship):
         if self.time_to_shoot < self.time_to_wait:
             self.time_to_shoot = time.time()
         else:
-            if random.randint(0, 50) == random.randint(0, 50):
+            if random.randint(0, 100) == random.randint(0, 100) and not self.destroyed:
                 self.bullet.shoot()
                 self.time_to_wait = time.time() + 1
 
@@ -633,13 +638,13 @@ class Fleet_Enemy:
         # get screen's rect
         self.screen_rect = screen.get_rect()
 
-        # id to identify ships in the dictionary
+        # id to identify each ship in the dictionary
         self.id = 0
-        # number of ships that will form the fleet
+        # number of ships that will form the flee0t
         if ai_ships:
-            self.ships_number = 3
+            self.ships_number = 5
         else:
-            self.ships_number = 9
+            self.ships_number = 13
 
         # will contain all ships and other one all id of
         # those that for one or another reason have to be deleted
@@ -706,6 +711,7 @@ class Fleet_Enemy:
             # reset the position of ship if it's out of screen
             if ship_e.is_out_of_screen():
                 self.reset_position(ship_e)
+                ship_e.set_destination()
 
         # delete all those that are destroyed
         self.remove_ship()
