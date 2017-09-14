@@ -73,7 +73,7 @@ class Start_Dust:
         Every object of the game does whatever is was created to do.
         """
         self.ship.process(self.fleet_enemy, self.fleet_ai_enemy, self.close)
-        self.fleet_enemy.process(self.ship)
+        # self.fleet_enemy.process(self.ship)
         self.fleet_ai_enemy.process(self.ship)
 
 

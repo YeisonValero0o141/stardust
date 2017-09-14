@@ -134,7 +134,11 @@ class Ship(object):
 
     def has_been_shot(self, ship):
         """Wheter it has been shot, change destroyed to True."""
-        if ship.bullet.rect.colliderect(self.rect) and ship.bullet.fired:
+        # adapt player's rect
+        rect = self.rect.copy()
+        rect.left -= 7
+        rect.right -= 7
+        if ship.bullet.rect.colliderect(rect) and ship.bullet.fired:
             self.destroyed = True
 
             ship.bullet.reset_fired()
@@ -144,7 +148,18 @@ class Ship(object):
 
     def collide_with(self, ship):
         """If it collide with ship switch destroyed to True."""
-        if ship.rect.colliderect(self.rect) and not self.destroyed:
+        # adapt player's rec to avoid collidings that don't look like one
+        rect = self.rect.copy()
+        rect_ship = ship.rect.copy()
+        # first, its own rect
+        rect.width = 35
+        rect.height = 39
+
+        # second, ship's one
+        rect_ship.width = 35
+        rect_ship.height = 39
+
+        if rect_ship.colliderect(rect) and not self.destroyed:
             # change its own value to draw exploding sprites and stop moving
             self.destroyed = True
 
@@ -356,7 +371,8 @@ class Ship_Player(Ship):
         elif event.key == pygame.K_RIGHT:
             self.moving_right = True
         elif event.key == pygame.K_SPACE:
-            self.bullet.shoot()
+            if not self.destroyed:
+                self.bullet.shoot()
 
 
     def keep_moving(self):
