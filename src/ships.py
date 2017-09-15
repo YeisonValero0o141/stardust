@@ -48,6 +48,8 @@ class Ship(object):
         # flag to know when update time_after_shot
         self.update_time_after_shot = True
 
+        self.sound = pygame.mixer.Sound("sounds/Arcade Explo A.wav")
+
         # ships' id
         self.id = id_ship
 

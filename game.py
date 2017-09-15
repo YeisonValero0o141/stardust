@@ -28,6 +28,15 @@ class Start_Dust:
         # black
         self.background_color = (0, 0, 0)
 
+        # background sound's path
+        sound_path = "sounds/DST-AngryMod.mp3"
+
+        # load music, set volume and play it in loop
+        pygame.mixer.music.load(sound_path)
+        pygame.mixer.music.set_volume(1)
+        pygame.mixer.music.play(-1)
+
+
         # first bullet's path and location in the image
         self.bullet1_path = "images/Bullet2.bmp"
         self.bullet1_location = (64, 1, 5, 10)
@@ -78,7 +87,7 @@ class Start_Dust:
         self.ship.process(self.fleet_enemy, self.fleet_ai_enemy, self.close)
         self.fleet_enemy.process(self.ship, self.level)
         self.fleet_ai_enemy.process(self.ship, self.level, ai_ships=True)
-        print len(self.fleet_enemy.ships), len(self.fleet_ai_enemy.ships)
+
         # if all enemies ships are destroyed:
         if not self.fleet_enemy.ships and not self.fleet_ai_enemy.ships:
             # level up
