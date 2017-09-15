@@ -633,30 +633,46 @@ class Ship_Enemy(Ship):
 class Fleet_Enemy:
     """"Fleet of Ships."""
 
-    def __init__(self, screen, bullet_path, bullet_location, ai_ships=False):
+    def __init__(self, screen, bullet_path, bullet_location, ai_ships=False, level=0):
         """Initialize fleet and set position."""
         # get screen's rect
         self.screen_rect = screen.get_rect()
+
+        # store some parameters
+        self.bullet_path = bullet_path
+        self.bullet_location = bullet_location
 
         # id to identify each ship in the dictionary
         self.id = 0
         # number of ships that will form the flee0t
         if ai_ships:
-            self.ships_number = 5
+            self.ships_number = 3
         else:
-            self.ships_number = 13
+            self.ships_number = 7
 
         # will contain all ships and other one all id of
         # those that for one or another reason have to be deleted
         self.ships, self.dead_ships = {}, []
 
         # create ships
-        self.make_ship(self.ships_number, screen, bullet_path, bullet_location, ai_ships)
+        self.make_ship(screen, bullet_path, bullet_location, ai_ships)
 
 
-    def make_ship(self, number_ships, screen, bullet_path, bullet_location, ai_ships=False):
+    def make_ship(self, screen, bullet_path, bullet_location, ai_ships=False, level=0):
         """Make n amount of ships and add it to the dict."""
-        for x in range(number_ships):
+        # depending on the level, make ships
+        if level == 1:
+            if ai_ships:
+                self.ships_number += 3
+            else:
+                self.ships_number += 5
+        elif level == 2:
+            if ai_ships:
+                self.ships_number += 2
+            else:
+                self.ships_number += 6
+
+        for x in range(self.ships_number):
             # instance a bullet for each ship
             bullet = Bullet(screen, bullet_path, bullet_location)
 
@@ -704,7 +720,7 @@ class Fleet_Enemy:
             self.dead_ships.remove(id_ship)
 
 
-    def process(self, ship):
+    def process(self, ship, level, ai_ships=False):
         """Process all actions of every ship."""
         for ship_e in self.ships.values():
             ship_e.process(ship, self.dead_ships)

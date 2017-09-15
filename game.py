@@ -29,18 +29,21 @@ class Start_Dust:
         self.background_color = (0, 0, 0)
 
         # first bullet's path and location in the image
-        bullet1_path = "images/Bullet2.bmp"
-        bullet1_location = (64, 1, 5, 10)
+        self.bullet1_path = "images/Bullet2.bmp"
+        self.bullet1_location = (64, 1, 5, 10)
 
         # player's ship
-        self.ship = Ship_Player(self.screen, bullet1_path, bullet1_location)
+        self.ship = Ship_Player(self.screen, self.bullet1_path, self.bullet1_location)
         # enemy fleet
-        self.fleet_enemy = Fleet_Enemy(self.screen, bullet1_path, bullet1_location)
+        self.fleet_enemy = Fleet_Enemy(self.screen, self.bullet1_path, self.bullet1_location)
         # ai anemy fleet
-        self.fleet_ai_enemy = Fleet_Enemy(self.screen, bullet1_path, bullet1_location, ai_ships=True)
+        self.fleet_ai_enemy = Fleet_Enemy(self.screen, self.bullet1_path, self.bullet1_location, ai_ships=True)
 
         # frames per seconds
         self.fps = 60
+
+        # there are just three levels
+        self.level = 0
 
         # hide cursor
         pygame.mouse.set_visible(False)
@@ -73,8 +76,17 @@ class Start_Dust:
         Every object of the game does whatever is was created to do.
         """
         self.ship.process(self.fleet_enemy, self.fleet_ai_enemy, self.close)
-        self.fleet_enemy.process(self.ship)
-        self.fleet_ai_enemy.process(self.ship)
+        self.fleet_enemy.process(self.ship, self.level)
+        self.fleet_ai_enemy.process(self.ship, self.level, ai_ships=True)
+        print len(self.fleet_enemy.ships), len(self.fleet_ai_enemy.ships)
+        # if all enemies ships are destroyed:
+        if not self.fleet_enemy.ships and not self.fleet_ai_enemy.ships:
+            # level up
+            self.level += 1
+
+            self.fleet_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, level=self.level)
+            self.fleet_ai_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, ai_ships=True, level=self.level)
+
 
 
     def manage_events(self):
