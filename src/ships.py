@@ -339,10 +339,6 @@ class Ship_Player(Ship):
         # flag to know when stop game
         self.stop_game = False
 
-        # time to close game after it's been destroyed
-        self.time_to_close_game = time.time()
-        self.time_to_wait = time.time()
-
         # stay at initial postion at the beginning
         self.moving_up = False
         self.moving_down = False
@@ -393,22 +389,7 @@ class Ship_Player(Ship):
         """Process ship and bullet."""
         self.keep_moving()
 
-        # close game if player has been destroyed
-        self.has_been_destroyed(close_game_function)
-
         super(self.__class__, self).process(go_up=go_up, fleet_1=fleet1, fleet_2=fleet2)
-
-
-    def has_been_destroyed(self, close_game_function):
-        """"If player has been destroyed close the game."""
-        if self.destroyed:
-            if self.time_to_wait > self.time_to_close_game:
-                self.time_to_close_game = time.time() + 1.45
-            else:
-                self.time_to_wait = time.time()
-
-            if self.time_to_wait > self.time_to_close_game:
-                close_game_function()
 
 
 

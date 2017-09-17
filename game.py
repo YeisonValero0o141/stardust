@@ -4,11 +4,13 @@ It's a fun game.
 """
 
 import sys
+import time
 
 import pygame
 
 from src.ships import Ship_Player, Ship_AI_Enemy, Fleet_Enemy
-from src.bullet import Bullet
+from src.stars import Stars
+from src.utils import draw_msg
 
 
 class Start_Dust:
@@ -25,6 +27,10 @@ class Start_Dust:
         self.screen = pygame.display.set_mode(self.screen_size)
         pygame.display.set_caption(title)
 
+        # times to know when draw 'game over' message
+        self.time_game_over_msg = time.time()
+        self.time_wait_game_over_msg = time.time()
+
         # black
         self.background_color = (0, 0, 0)
 
@@ -36,17 +42,15 @@ class Start_Dust:
         pygame.mixer.music.set_volume(1)
         pygame.mixer.music.play(-1)
 
+        # flag to know whether or not the game has started
+        self.running = False
 
         # first bullet's path and location in the image
         self.bullet1_path = "images/Bullet2.bmp"
         self.bullet1_location = (64, 1, 5, 10)
 
-        # player's ship
-        self.ship = Ship_Player(self.screen, self.bullet1_path, self.bullet1_location)
-        # enemy fleet
-        self.fleet_enemy = Fleet_Enemy(self.screen, self.bullet1_path, self.bullet1_location)
-        # ai anemy fleet
-        self.fleet_ai_enemy = Fleet_Enemy(self.screen, self.bullet1_path, self.bullet1_location, ai_ships=True)
+        # stars of brackground
+        self.stars = Stars(self.screen)
 
         # frames per seconds
         self.fps = 60
@@ -84,18 +88,21 @@ class Start_Dust:
         """
         Every object of the game does whatever is was created to do.
         """
-        self.ship.process(self.fleet_enemy, self.fleet_ai_enemy, self.close)
-        self.fleet_enemy.process(self.ship, self.level)
-        self.fleet_ai_enemy.process(self.ship, self.level, ai_ships=True)
+        self.stars.process()
 
-        # if all enemies ships are destroyed:
-        if not self.fleet_enemy.ships and not self.fleet_ai_enemy.ships:
-            # level up
-            self.level += 1
+        if self.running:
+            self.ship.process(self.fleet_enemy, self.fleet_ai_enemy, self.close)
+            self.fleet_enemy.process(self.ship, self.level)
+            self.fleet_ai_enemy.process(self.ship, self.level, ai_ships=True)
 
-            self.fleet_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, level=self.level)
-            self.fleet_ai_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, ai_ships=True, level=self.level)
+            # if all enemies ships are destroyed:
+            if not self.fleet_enemy.ships and not self.fleet_ai_enemy.ships:
+                # level up
+                self.level += 1
 
+                # make fleets again
+                self.fleet_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, level=self.level)
+                self.fleet_ai_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, ai_ships=True, level=self.level)
 
 
     def manage_events(self):
@@ -103,12 +110,16 @@ class Start_Dust:
         Manage event like use closing the game, pressing the
         key arrows, etc.
         """
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.close()
             elif event.type == pygame.KEYDOWN:
-                self.ship.check_keydown(event)
-            elif event.type == pygame.KEYUP:
+                if not self.running:
+                    self.start_game(event)
+                else:
+                    self.ship.check_keydown(event)
+            elif event.type == pygame.KEYUP and self.running:
                 self.ship.check_keyup(event)
 
 
@@ -117,13 +128,55 @@ class Start_Dust:
         Update the screen drawing all the objects of the game on it.
         """
         self.screen.fill(self.background_color)
+        self.stars.render()
 
-        self.ship.render()
+        if self.running:
+            # draw 'game over' message if ship is destroyed
+            if self.ship.destroyed:
+                self.show_game_over_msg()
 
-        self.fleet_enemy.render()
-        self.fleet_ai_enemy.render()
+            # draw level
+            draw_msg("Level {}".format(self.level), self.screen, 30, (420, 0))
+
+            # render game's objects
+            self.ship.render()
+            self.fleet_enemy.render()
+            self.fleet_ai_enemy.render()
+
+        else:
+            draw_msg("Start", self.screen, 60)
 
         pygame.display.flip()
+
+    def start_game(self, event):
+        """If enter key has been pressed, start game."""
+        if event.key == pygame.K_RETURN:
+            self.running = True
+            self.init_ships()
+
+
+    def show_game_over_msg(self):
+        """Draw 'Game Over' on screen for a second."""
+        if self.time_game_over_msg < self.time_wait_game_over_msg:
+            self.time_game_over_msg = time.time() + 3
+        else:
+            self.time_wait_game_over_msg = time.time()
+
+        # draw message
+        draw_msg("Game Over", self.screen, 60, (350, 180))
+
+        if self.time_wait_game_over_msg >= self.time_game_over_msg:
+            self.running = False
+
+
+    def init_ships(self):
+        """Instance all game's object."""
+        # player's ship
+        self.ship = Ship_Player(self.screen, self.bullet1_path, self.bullet1_location)
+        # enemy fleet
+        self.fleet_enemy = Fleet_Enemy(self.screen, self.bullet1_path, self.bullet1_location)
+        # ai enemy fleet
+        self.fleet_ai_enemy = Fleet_Enemy(self.screen, self.bullet1_path, self.bullet1_location, ai_ships=True)
 
 
     def close(self):
