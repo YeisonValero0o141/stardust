@@ -1,8 +1,8 @@
 # StarDust
 It's a shooter video game. The only mission is keep you alive and kill all enemies.
 
-## How to run it
-Run this command in the terminal: python game.py
+## How to run it:
+    - python game.py
 
 ### How to play:
     - Start the game pressing enter.
