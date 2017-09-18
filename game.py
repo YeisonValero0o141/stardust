@@ -28,8 +28,8 @@ class Start_Dust:
         pygame.display.set_caption(title)
 
         # times to know when draw 'game over' message
-        self.time_game_over_msg = time.time()
-        self.time_wait_game_over_msg = time.time()
+        self.time_msg = time.time()
+        self.time_wait_msg = time.time()
 
         # black
         self.background_color = (0, 0, 0)
@@ -97,15 +97,18 @@ class Start_Dust:
 
             # if all enemies ships are destroyed:
             if not self.fleet_enemy.ships and not self.fleet_ai_enemy.ships:
-                # level up
-                self.level += 1
 
-                # make fleets again
-                self.fleet_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, level=self.level)
-                self.fleet_ai_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, ai_ships=True, level=self.level)
+                if not self.level >= 5:
+                    # level up
+                    self.level += 1
+
+                if not self.level >= 5:
+                    # make fleets again
+                    self.fleet_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, level=self.level)
+                    self.fleet_ai_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, ai_ships=True, level=self.level)
         else:
             self.reset_level()
-            
+
 
     def manage_events(self):
         """
@@ -135,7 +138,11 @@ class Start_Dust:
         if self.running:
             # draw 'game over' message if ship is destroyed
             if self.ship.destroyed:
-                self.show_game_over_msg()
+                self.show_msg("Game Over", 60, (350, 180))
+
+            # whether player has won
+            if self.level >= 5:
+                self.show_msg("You have won", 60, (310, 190))
 
             # draw level
             draw_msg("Level {}".format(self.level), self.screen, 30, (420, 0))
@@ -157,17 +164,17 @@ class Start_Dust:
             self.init_ships()
 
 
-    def show_game_over_msg(self):
+    def show_msg(self, msg, size, pos):
         """Draw 'Game Over' on screen for a second."""
-        if self.time_game_over_msg < self.time_wait_game_over_msg:
-            self.time_game_over_msg = time.time() + 3
+        if self.time_msg < self.time_wait_msg:
+            self.time_msg = time.time() + 3
         else:
-            self.time_wait_game_over_msg = time.time()
+            self.time_wait_msg = time.time()
 
         # draw message
-        draw_msg("Game Over", self.screen, 60, (350, 180))
+        draw_msg(msg, self.screen, size, pos)
 
-        if self.time_wait_game_over_msg >= self.time_game_over_msg:
+        if self.time_wait_msg >= self.time_msg:
             self.running = False
 
 

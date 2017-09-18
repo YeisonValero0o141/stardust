@@ -136,11 +136,7 @@ class Ship(object):
 
     def has_been_shot(self, ship):
         """Wheter it has been shot, change destroyed to True."""
-        # adapt player's rect
-        rect = self.rect.copy()
-        # rect.left -= 7
-        # rect.right -= 7
-        if ship.bullet.rect.colliderect(rect) and ship.bullet.fired and not self.destroyed:
+        if ship.bullet.rect.colliderect(self.rect) and ship.bullet.fired and not self.destroyed:
             self.destroyed = True
 
             ship.bullet.reset_fired()
@@ -647,16 +643,12 @@ class Fleet_Enemy:
     def make_ship(self, screen, bullet_path, bullet_location, ai_ships=False, level=0):
         """Make n amount of ships and add it to the dict."""
         # depending on the level, make ships
-        if level == 1:
+        if not level == 0:
             if ai_ships:
-                self.ships_number += 3
+                self.ships_number += 1
             else:
-                self.ships_number += 5
-        elif level == 2:
-            if ai_ships:
                 self.ships_number += 2
-            else:
-                self.ships_number += 6
+
 
         for x in range(self.ships_number):
             # instance a bullet for each ship
