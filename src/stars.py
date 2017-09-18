@@ -47,7 +47,7 @@ class Star:
 class Stars:
     """All stars of the game."""
 
-    def __init__(self, screen, numbers=100):
+    def __init__(self, screen, numbers=150):
         """Makes stars and store them in a list."""
         self.stars = []
 

@@ -321,10 +321,13 @@ class Ship_Player(Ship):
         # instance bullet
         self.bullet = Bullet(screen, bullet_path, bullet_location)
 
+        # make a difference speed of bullet for ship player
+        self.bullet.speed = 10
+
         # get screen's rect
         screen_rect = screen.get_rect()
 
-        speed = 7
+        speed = 8
 
         # set position at the middle bottom of screen
         x = screen_rect.centerx - 40
