@@ -37,7 +37,7 @@ class Start_Dust:
         # background sound's path
         sound_path = "sounds/DST-AngryMod.mp3"
 
-        # load music, set volume and play it in loop
+        # load music, set volume and play it in a loop
         pygame.mixer.music.load(sound_path)
         pygame.mixer.music.set_volume(1)
         pygame.mixer.music.play(-1)
