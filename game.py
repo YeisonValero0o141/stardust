@@ -103,7 +103,9 @@ class Start_Dust:
                 # make fleets again
                 self.fleet_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, level=self.level)
                 self.fleet_ai_enemy.make_ship(self.screen, self.bullet1_path, self.bullet1_location, ai_ships=True, level=self.level)
-
+        else:
+            self.reset_level()
+            
 
     def manage_events(self):
         """
@@ -177,6 +179,11 @@ class Start_Dust:
         self.fleet_enemy = Fleet_Enemy(self.screen, self.bullet1_path, self.bullet1_location)
         # ai enemy fleet
         self.fleet_ai_enemy = Fleet_Enemy(self.screen, self.bullet1_path, self.bullet1_location, ai_ships=True)
+
+
+    def reset_level(self):
+        """Set level to its initial value."""
+        self.level = 0
 
 
     def close(self):
