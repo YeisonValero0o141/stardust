@@ -1,6 +1,8 @@
 """
-Run StarDust Game.
-It's a fun game.
+Run game.
+
+Copyright: (c) 2017 by Yeison Valero.
+License: MIT, see LICENSE for more information.
 """
 
 import sys

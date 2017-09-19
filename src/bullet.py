@@ -1,5 +1,8 @@
 """
 Bullet used by all the ships.
+
+Copyright: (c) 2017 by Yeison Valero.
+License: MIT, see LICENSE for more information.
 """
 
 import pygame
