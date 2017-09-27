@@ -10,8 +10,8 @@ import time
 
 import pygame
 
-from bullet import Bullet
-from utils import get_sprite
+from src.bullet import Bullet
+from src.utils import get_sprite
 
 
 class Ship(object):
@@ -50,8 +50,6 @@ class Ship(object):
         self.destroyed = False
         # flag to know when update time_after_shot
         self.update_time_after_shot = True
-
-        self.sound = pygame.mixer.Sound("sounds/Arcade Explo A.wav")
 
         # ships' id
         self.id = id_ship

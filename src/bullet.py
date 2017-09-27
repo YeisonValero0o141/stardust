@@ -7,7 +7,7 @@ License: MIT, see LICENSE for more information.
 
 import pygame
 
-from utils import get_sprite
+from src.utils import get_sprite
 
 
 class Bullet:
